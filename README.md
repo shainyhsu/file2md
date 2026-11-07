@@ -1,4 +1,4 @@
-# MD Converter
+# Files 2 MD Converter
 
 Convert common office and text files to Markdown in the browser. Batch-friendly. Files never leave your device.
 

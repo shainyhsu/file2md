@@ -8,7 +8,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
-  
   <style>
     :root {
       --bg: #0a0f0c;
@@ -313,7 +312,7 @@
         count: (ok, total) => `${ok} / ${total} 成功`,
         unsupported: ext => `不支援的格式：.${ext}`,
         pptxEmpty: '無法從 PPTX 提取文字（可能是空投影片或純圖片）',
-        pdfEmpty: '此 PDF 沒有可提取的文字（多半是掃描檔）。本工具不連外部 OCR；請改用 AI 上傳 PDF 轉 Markdown。',
+        pdfEmpty: '此 PDF 沒有可提取的文字（可能是掃描檔／純圖片 PDF）。純前端無法做 OCR，請改用有文字層的 PDF，或先在電腦用 OCR 轉成可搜尋 PDF。',
         pdfFail: msg => `PDF 讀取失敗：${msg}`
       },
       en: {
@@ -336,7 +335,7 @@
         count: (ok, total) => `${ok} / ${total} succeeded`,
         unsupported: ext => `Unsupported format: .${ext}`,
         pptxEmpty: 'Could not extract text from PPTX (empty slides or image-only)',
-        pdfEmpty: 'No extractable text (likely scanned). No external OCR; upload the PDF to an AI for Markdown.',
+        pdfEmpty: 'No extractable text in this PDF (likely a scanned/image-only file). Client-side OCR is not available. Use a searchable PDF, or OCR it first on a computer.',
         pdfFail: msg => `PDF read failed: ${msg}`
       }
     };
@@ -442,7 +441,42 @@
         return md;
       }
       if (ext === 'pdf') {
-        return await convertPdf(buffer);
+        try {
+          const pdf = await pdfjsLib.getDocument({
+            data: buffer,
+            // More tolerant loading for odd PDFs
+            disableAutoFetch: true,
+            disableStream: true
+          }).promise;
+          const pages = [];
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent({
+              // include marked content helps some docs
+              includeMarkedContent: false
+            });
+            // Rebuild lines using hasEOL when available
+            let pageText = '';
+            for (const item of content.items) {
+              if (!item.str) continue;
+              pageText += item.str;
+              if (item.hasEOL) pageText += '\n';
+              else pageText += ' ';
+            }
+            pageText = pageText.replace(/[ \t]+\n/g, '\n').replace(/[ \t]{2,}/g, ' ').trim();
+            if (pageText) pages.push(pageText);
+          }
+          const text = pages.join('\n\n').trim();
+          if (!text) throw new Error(t('pdfEmpty'));
+          return text;
+        } catch (err) {
+          const msg = (err && err.message) ? String(err.message) : String(err);
+          // Keep our own messages
+          if (msg === t('pdfEmpty') || msg.includes('掃描') || msg.includes('scanned') || msg.includes('image-only')) {
+            throw err;
+          }
+          throw new Error(t('pdfFail', msg));
+        }
       }
       if (ext === 'pptx') {
         return await extractPptx(buffer);
@@ -474,44 +508,6 @@
       }
       if (!md) throw new Error(t('pptxEmpty'));
       return md.trim();
-    }
-
-    // ---------- PDF: text layer only (no external OCR, no China model hosts) ----------
-    async function convertPdf(buffer) {
-      let pdf;
-      try {
-        pdf = await pdfjsLib.getDocument({
-          data: buffer,
-          disableAutoFetch: true,
-          disableStream: true
-        }).promise;
-      } catch (err) {
-        throw new Error(t('pdfFail', err.message || String(err)));
-      }
-
-      const numPages = pdf.numPages;
-      const textPages = [];
-      let hasText = false;
-
-      for (let i = 1; i <= numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent({ includeMarkedContent: false });
-        let pageText = '';
-        for (const item of content.items) {
-          if (!item.str) continue;
-          pageText += item.str;
-          pageText += item.hasEOL ? '\n' : ' ';
-        }
-        pageText = pageText.replace(/[ \t]+\n/g, '\n').replace(/[ \t]{2,}/g, ' ').trim();
-        textPages.push(pageText);
-        if (pageText.length > 20) hasText = true;
-      }
-
-      if (hasText) {
-        return textPages.filter(Boolean).join('\n\n').trim();
-      }
-
-      throw new Error(t('pdfEmpty'));
     }
 
     // ---------- UI ----------

@@ -639,46 +639,7 @@
     });
 
     async function triggerDownload(blob, filename) {
-      // File System Access (Chrome)
-      if (window.showSaveFilePicker) {
-        try {
-          const handle = await window.showSaveFilePicker({
-            suggestedName: filename,
-            types: [{
-              description: 'File',
-              accept: {
-                'text/plain': ['.md', '.txt'],
-                'application/zip': ['.zip']
-              }
-            }]
-          });
-          const writable = await handle.createWritable();
-          await writable.write(blob);
-          await writable.close();
-          showStatus(lang === 'zh' ? '已儲存' : 'Saved', 'success');
-          setTimeout(hideStatus, 1500);
-          return;
-        } catch (e) {
-          if (e && e.name === 'AbortError') return;
-        }
-      }
-
-      // Web Share Level 2 (Android Chrome often supports files)
-      if (navigator.canShare && navigator.share) {
-        try {
-          const file = new File([blob], filename, {
-            type: blob.type || 'application/octet-stream'
-          });
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: filename });
-            return;
-          }
-        } catch (e) {
-          if (e && e.name === 'AbortError') return;
-        }
-      }
-
-      // Classic blob + <a download>
+      // Prefer classic <a download> first so extension stays correct on Android
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -687,7 +648,8 @@
       a.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;';
       document.body.appendChild(a);
       a.click();
-      // Keep blob URL alive long enough for Android download manager
+
+      // Keep URL alive for Android download manager
       setTimeout(function () {
         try { document.body.removeChild(a); } catch (e) {}
         URL.revokeObjectURL(url);
@@ -699,9 +661,14 @@
         showStatus(t('emptyContent'), 'error');
         return;
       }
-      const name = originalName.replace(/\.[^.]+$/, '') + '.md';
-      // text/plain is more reliable than text/markdown on Android
-      const blob = new Blob(['\uFEFF' + content], { type: 'text/plain;charset=utf-8' });
+      // Strip any existing extension, force single .md (never .md.zip)
+      let base = originalName.replace(/\.[^.]+$/, '');
+      base = base.replace(/\.md$/i, '');
+      const name = base + '.md';
+      // octet-stream reduces Android Chrome mis-labeling as zip
+      const blob = new Blob(['\uFEFF' + content], {
+        type: 'application/octet-stream'
+      });
       await triggerDownload(blob, name);
     }
 
@@ -716,8 +683,10 @@
         const name = item.name.replace(/\.[^.]+$/, '') + '.md';
         zip.file(name, '\uFEFF' + item.md);
       });
-      const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
-      await triggerDownload(blob, 'markdown-files.zip');
+      const blob = await zip.generateAsync({ type: 'blob' });
+      // real zip only here
+      const zipBlob = new Blob([blob], { type: 'application/zip' });
+      await triggerDownload(zipBlob, 'markdown-files.zip');
     });
 
     clearAllBtn.addEventListener('click', () => {

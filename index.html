@@ -545,28 +545,50 @@
       }
     });
 
-    function downloadMd(originalName, content) {
-      const name = originalName.replace(/\.[^.]+$/, '') + '.md';
-      const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    function triggerDownload(blob, filename) {
+      // More reliable on Android / iOS
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(a.href);
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      // Some mobile browsers need a tiny delay after append
+      setTimeout(() => {
+        a.click();
+        // Revoke after the browser has started the download
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 1500);
+      }, 0);
+    }
+
+    function downloadMd(originalName, content) {
+      if (content == null || content === '') {
+        showStatus(lang === 'zh' ? '內容是空的，無法下載' : 'Empty content, cannot download', 'error');
+        return;
+      }
+      const name = originalName.replace(/\.[^.]+$/, '') + '.md';
+      // BOM helps some editors recognize UTF-8
+      const blob = new Blob(['\uFEFF' + content], { type: 'text/markdown;charset=utf-8' });
+      triggerDownload(blob, name);
     }
 
     downloadAllBtn.addEventListener('click', async () => {
+      const okItems = items.filter(i => !i.error && i.md);
+      if (!okItems.length) {
+        showStatus(lang === 'zh' ? '沒有可下載的檔案' : 'No files to download', 'error');
+        return;
+      }
       const zip = new JSZip();
-      items.filter(i => !i.error).forEach(item => {
+      okItems.forEach(item => {
         const name = item.name.replace(/\.[^.]+$/, '') + '.md';
-        zip.file(name, item.md);
+        zip.file(name, '\uFEFF' + item.md);
       });
       const blob = await zip.generateAsync({ type: 'blob' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'markdown-files.zip';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      triggerDownload(blob, 'markdown-files.zip');
     });
 
     clearAllBtn.addEventListener('click', () => {

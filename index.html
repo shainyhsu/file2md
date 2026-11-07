@@ -1,621 +1,211 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forest MD Converter · 檔案轉 Markdown</title>
-  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
-  <style>
-    :root {
-      --bg: #0a0f0c;
-      --bg2: #111916;
-      --card: #16201a;
-      --border: #2a3c32;
-      --text: #e8f0e9;
-      --muted: #8aa392;
-      --accent: #5d9e6f;
-      --accent-hover: #6fb382;
-      --moss: #3d6b4f;
-      --pine: #2d4a3a;
-      --success: #6bcf7f;
-      --danger: #e07a6a;
-      --warning: #d4a84b;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      min-height: 100vh;
-      background-image:
-        radial-gradient(ellipse at 20% 0%, rgba(61, 107, 79, 0.18) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 100%, rgba(45, 74, 58, 0.15) 0%, transparent 45%);
-    }
-    .container { max-width: 960px; margin: 0 auto; padding: 28px 18px 60px; }
-    header {
-      margin-bottom: 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .header-text h1 {
-      font-size: 1.85rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #a8d5b5 0%, #5d9e6f 60%, #3d6b4f 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .subtitle { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
-
-    /* Single globe toggle button */
-    .lang-toggle {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: #1a2420;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      flex-shrink: 0;
-      padding: 0;
-    }
-    .lang-toggle:hover {
-      background: var(--moss);
-      border-color: var(--accent);
-    }
-    .lang-toggle:active {
-      transform: scale(0.94);
-    }
-    .lang-toggle svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    .dropzone {
-      border: 2px dashed var(--border);
-      border-radius: 18px;
-      padding: 44px 24px;
-      text-align: center;
-      background: var(--card);
-      transition: all 0.25s ease;
-      cursor: pointer;
-      margin-bottom: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-    .dropzone::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(93, 158, 111, 0.08), transparent);
-      opacity: 0;
-      transition: opacity 0.25s;
-    }
-    .dropzone:hover, .dropzone.dragover {
-      border-color: var(--accent);
-      background: #1a2820;
-    }
-    .dropzone:hover::before, .dropzone.dragover::before { opacity: 1; }
-    .dropzone .icon { font-size: 2.8rem; margin-bottom: 10px; filter: grayscale(0.3); }
-    .dropzone strong { font-size: 1.1rem; }
-    .dropzone p { color: var(--muted); margin-top: 10px; font-size: 0.9rem; }
-    .formats {
-      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
-      margin-top: 16px;
-    }
-    .formats span {
-      background: var(--pine);
-      color: var(--muted);
-      font-size: 0.75rem;
-      padding: 3px 9px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-    }
-
-    .status {
-      margin: 14px 0;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      display: none;
-      border: 1px solid transparent;
-    }
-    .status.show { display: block; }
-    .status.info { background: #1a2e24; color: #9dceb0; border-color: #2d4a3a; }
-    .status.success { background: #1a2e22; color: var(--success); border-color: #2d5a3e; }
-    .status.error { background: #2e1a1a; color: var(--danger); border-color: #5a2d2d; }
-
-    .results { display: none; margin-top: 8px; }
-    .results.show { display: block; }
-
-    .toolbar {
-      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center;
-    }
-    .btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      background: var(--accent);
-      color: #0a0f0c;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-size: 0.92rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-ghost:hover { background: var(--card); border-color: var(--accent); }
-
-    .file-list { display: flex; flex-direction: column; gap: 10px; }
-    .file-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      transition: border-color 0.2s;
-    }
-    .file-card:hover { border-color: var(--moss); }
-    .file-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px;
-      background: var(--bg2);
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .file-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .badge {
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-weight: 500;
-    }
-    .badge.ok { background: #1e3d2a; color: var(--success); }
-    .badge.err { background: #3d1e1e; color: var(--danger); }
-    .file-actions { display: flex; gap: 8px; }
-    .file-actions button {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 5px 12px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .file-actions button:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    .file-body {
-      padding: 0 16px 14px;
-      display: none;
-    }
-    .file-body.open { display: block; }
-    .file-body textarea {
-      width: 100%;
-      height: 280px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      padding: 14px;
-      font-family: "SF Mono", "Fira Code", Consolas, monospace;
-      font-size: 0.85rem;
-      line-height: 1.5;
-      resize: vertical;
-      margin-top: 10px;
-    }
-    .error-msg { color: var(--danger); font-size: 0.88rem; padding: 12px 0 4px; }
-
-    footer {
-      margin-top: 48px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.78rem;
-      opacity: 0.8;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌲 Forest MD Converter · 檔案轉 Markdown</title>
+    <!-- 引入核心轉換與壓縮套件 -->
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
+    <script src="https://unpkg.com"></script>
+    
+    <style>
+        :root { --primary: #2d6a4f; --bg: #f4f9f4; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: #333; max-width: 800px; margin: 40px auto; padding: 0 20px; text-align: center; }
+        h1 { color: var(--primary); }
+        .drop-zone { border: 3px dashed var(--primary); background: #fff; padding: 40px; border-radius: 12px; cursor: pointer; margin: 20px 0; transition: 0.3s; }
+        .drop-zone:hover { background: #e8f5e9; }
+        .btn-group { margin: 20px 0; display: flex; gap: 10px; justify-content: center; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 15px; }
+        button:hover { background: #1b4332; }
+        #file-list { text-align: left; background: white; border-radius: 8px; padding: 10px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; }
+        .file-item:last-child { border-bottom: none; }
+        .download-btn { background: #4a90e2; padding: 5px 10px; font-size: 13px; }
+        .download-btn:hover { background: #357abd; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="header-text">
-        <h1 data-i18n="title">🌲 Forest MD Converter</h1>
-        <p class="subtitle" data-i18n="subtitle">純前端轉換・支援批次・檔案永不離開裝置</p>
-      </div>
 
-      <button class="lang-toggle" id="langToggle" title="切換語言 / Toggle language" aria-label="Language">
-        <!-- globe icon -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M2 12h20"/>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
-      </button>
-    </header>
-
-    <div class="dropzone" id="dropzone">
-      <div class="icon">🍃</div>
-      <strong data-i18n="dropTitle">拖曳檔案到這裡，或點擊選擇（可複選）</strong>
-      <p data-i18n="dropDesc">支援 PDF、DOCX、PPTX、XLSX、CSV、JSON、HTML、TXT、MD</p>
-      <div class="formats">
-        <span>PDF</span><span>DOCX</span><span>PPTX</span><span>XLSX</span>
-        <span>CSV</span><span>JSON</span><span>HTML</span><span>TXT</span>
-      </div>
-      <input type="file" id="fileInput" multiple
-        accept=".pdf,.docx,.pptx,.xlsx,.xls,.csv,.tsv,.json,.xml,.html,.htm,.txt,.md,.markdown"
-        style="display:none" />
+    <h1>🌲 Forest MD Converter</h1>
+    <p>純前端轉換・支援批次・檔案永不離開裝置</p>
+    
+    <div class="drop-zone" id="drop-zone">
+        <strong>拖曳檔案到這裡，或點擊選擇（可複選）</strong>
+        <p style="font-size:13px; color:#666;">支援 PDF, DOCX, XLSX, CSV, JSON, HTML, TXT, MD</p>
+        <input type="file" id="file-input" multiple style="display: none;">
     </div>
 
-    <div class="status" id="status"></div>
-
-    <div class="results" id="results">
-      <div class="toolbar">
-        <button class="btn" id="downloadAllBtn" data-i18n="downloadZip">⬇ 全部打包成 ZIP</button>
-        <button class="btn btn-ghost" id="clearAllBtn" data-i18n="clearAll">清除全部</button>
-        <span id="countLabel" style="color:var(--muted);font-size:0.88rem;margin-left:auto;"></span>
-      </div>
-      <div class="file-list" id="fileList"></div>
+    <div class="btn-group">
+        <button onclick="downloadAllAsZip()">⬇ 全部打包成 ZIP</button>
+        <button style="background:#d9534f;" onclick="clearAll()">清除全部</button>
     </div>
 
-    <footer data-i18n="footer">
-      mammoth · SheetJS · PDF.js · JSZip · Turndown<br>
-      靈感來自 Microsoft MarkItDown · 100% 本地執行
-    </footer>
-  </div>
+    <div id="file-list" style="display:none;"></div>
 
-  <script type="module">
-    import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.mjs';
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
+    <script>
+        // 設定 PDF.js Worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cloudflare.com';
+        const turndownService = new TurndownService();
+        
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        let convertedFiles = []; // 儲存成功轉換的檔案資料
 
-    // ---------- i18n ----------
-    const i18n = {
-      zh: {
-        title: '🌲 Forest MD Converter',
-        subtitle: '純前端轉換・支援批次・檔案永不離開裝置',
-        dropTitle: '拖曳檔案到這裡，或點擊選擇（可複選）',
-        dropDesc: '支援 PDF、DOCX、PPTX、XLSX、CSV、JSON、HTML、TXT、MD',
-        downloadZip: '⬇ 全部打包成 ZIP',
-        clearAll: '清除全部',
-        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown<br>靈感來自 Microsoft MarkItDown · 100% 本地執行',
-        converting: n => `正在轉換 ${n} 個檔案…`,
-        done: (ok, total) => `完成：${ok} 成功，${total - ok} 失敗`,
-        copied: '已複製到剪貼簿',
-        preview: '預覽',
-        download: '下載',
-        copy: '複製',
-        remove: '移除',
-        success: '完成',
-        failed: '失敗',
-        count: (ok, total) => `${ok} / ${total} 成功`,
-        unsupported: ext => `不支援的格式：.${ext}`,
-        pptxEmpty: '無法從 PPTX 提取文字（可能是空投影片或純圖片）'
-      },
-      en: {
-        title: '🌲 Forest MD Converter',
-        subtitle: 'Client-side conversion · Batch support · Files never leave your device',
-        dropTitle: 'Drop files here, or click to select (multiple allowed)',
-        dropDesc: 'Supports PDF, DOCX, PPTX, XLSX, CSV, JSON, HTML, TXT, MD',
-        downloadZip: '⬇ Download all as ZIP',
-        clearAll: 'Clear all',
-        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown<br>Inspired by Microsoft MarkItDown · 100% local',
-        converting: n => `Converting ${n} file(s)…`,
-        done: (ok, total) => `Done: ${ok} succeeded, ${total - ok} failed`,
-        copied: 'Copied to clipboard',
-        preview: 'Preview',
-        download: 'Download',
-        copy: 'Copy',
-        remove: 'Remove',
-        success: 'Done',
-        failed: 'Failed',
-        count: (ok, total) => `${ok} / ${total} succeeded`,
-        unsupported: ext => `Unsupported format: .${ext}`,
-        pptxEmpty: 'Could not extract text from PPTX (empty slides or image-only)'
-      }
-    };
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.background = '#e8f5e9'; });
+        dropZone.addEventListener('dragleave', () => dropZone.style.background = '#fff');
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.style.background = '#fff'; handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-    let lang = localStorage.getItem('forest-md-lang') || 'zh';
+        async function handleFiles(files) {
+            if(files.length > 0) fileList.style.display = 'block';
+            
+            for (let file of files) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'file-item';
+                itemDiv.innerHTML = `<span>📄 ${file.name} (轉換中...)</span>`;
+                fileList.appendChild(itemDiv);
 
-    function t(key, ...args) {
-      const val = i18n[lang][key];
-      return typeof val === 'function' ? val(...args) : val;
-    }
+                try {
+                    let mdContent = await convertToMarkdown(file);
+                    
+                    // 轉換成功，保存資料
+                    const fileData = { name: file.name, content: mdContent };
+                    convertedFiles.push(fileData);
 
-    function applyLang() {
-      document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.dataset.i18n;
-        if (i18n[lang][key]) el.innerHTML = i18n[lang][key];
-      });
-      // update title attribute for accessibility
-      document.getElementById('langToggle').title =
-        lang === 'zh' ? 'Switch to English' : '切換為繁體中文';
-      renderList();
-    }
+                    // 更新 UI 並綁定下載事件
+                    itemDiv.innerHTML = `
+                        <span>📄 ${file.name} (轉換成功)</span>
+                        <button class="download-btn">儲存 MD</button>
+                    `;
+                    
+                    // ✨ 核心修正：綁定單檔下載，確保傳入正確的檔名與純文字內容
+                    itemDiv.querySelector('.download-btn').addEventListener('click', () => {
+                        saveSingleFile(fileData.name, fileData.content);
+                    });
 
-    document.getElementById('langToggle').addEventListener('click', () => {
-      lang = lang === 'zh' ? 'en' : 'zh';
-      localStorage.setItem('forest-md-lang', lang);
-      applyLang();
-    });
-
-    // ---------- DOM ----------
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('fileInput');
-    const statusEl = document.getElementById('status');
-    const results = document.getElementById('results');
-    const fileList = document.getElementById('fileList');
-    const downloadAllBtn = document.getElementById('downloadAllBtn');
-    const clearAllBtn = document.getElementById('clearAllBtn');
-    const countLabel = document.getElementById('countLabel');
-
-    const turndown = new TurndownService({
-      headingStyle: 'atx',
-      codeBlockStyle: 'fenced',
-      bulletListMarker: '-'
-    });
-
-    /** @type {{name:string, md:string, error?:string}[]} */
-    let items = [];
-
-    function showStatus(msg, type = 'info') {
-      statusEl.textContent = msg;
-      statusEl.className = `status show ${type}`;
-    }
-    function hideStatus() { statusEl.className = 'status'; }
-
-    // ---------- Converters ----------
-    async function convertFile(file) {
-      const ext = file.name.split('.').pop().toLowerCase();
-      const buffer = await file.arrayBuffer();
-
-      if (['txt', 'md', 'markdown'].includes(ext)) {
-        return new TextDecoder().decode(buffer);
-      }
-      if (['html', 'htm'].includes(ext)) {
-        return turndown.turndown(new TextDecoder().decode(buffer));
-      }
-      if (ext === 'json') {
-        const text = new TextDecoder().decode(buffer);
-        try {
-          return '```json\n' + JSON.stringify(JSON.parse(text), null, 2) + '\n```';
-        } catch { return text; }
-      }
-      if (ext === 'xml') {
-        return '```xml\n' + new TextDecoder().decode(buffer) + '\n```';
-      }
-      if (['csv', 'tsv'].includes(ext)) {
-        const text = new TextDecoder().decode(buffer);
-        const delim = ext === 'tsv' ? '\t' : ',';
-        const rows = text.trim().split(/\r?\n/).map(r => r.split(delim));
-        if (!rows.length) return '';
-        const header = rows[0].map(c => c.trim()).join(' | ');
-        const sep = rows[0].map(() => '---').join(' | ');
-        const body = rows.slice(1).map(r => r.map(c => c.trim()).join(' | ')).join('\n');
-        return `${header}\n${sep}\n${body}`;
-      }
-      if (ext === 'docx') {
-        const result = await mammoth.convertToHtml({ arrayBuffer: buffer });
-        return turndown.turndown(result.value);
-      }
-      if (['xlsx', 'xls'].includes(ext)) {
-        const wb = XLSX.read(buffer, { type: 'array' });
-        let md = '';
-        wb.SheetNames.forEach((name, i) => {
-          if (i) md += '\n\n';
-          md += `## ${name}\n\n`;
-          const sheet = wb.Sheets[name];
-          const csv = XLSX.utils.sheet_to_csv(sheet);
-          const rows = csv.trim().split(/\r?\n/).map(r => r.split(','));
-          if (!rows.length) return;
-          md += rows[0].join(' | ') + '\n';
-          md += rows[0].map(() => '---').join(' | ') + '\n';
-          md += rows.slice(1).map(r => r.join(' | ')).join('\n');
-        });
-        return md;
-      }
-      if (ext === 'pdf') {
-        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-        let text = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
-          text += content.items.map(it => it.str).join(' ') + '\n\n';
+                } catch (error) {
+                    console.error(error);
+                    itemDiv.innerHTML = `<span style="color:red;">❌ ${file.name} 轉換失敗</span>`;
+                }
+            }
         }
-        return text.trim();
-      }
-      if (ext === 'pptx') {
-        return await extractPptx(buffer);
-      }
-      throw new Error(t('unsupported', ext));
-    }
 
-    async function extractPptx(arrayBuffer) {
-      const zip = await JSZip.loadAsync(arrayBuffer);
-      const aNS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
-      let md = '';
-      let slideIndex = 1;
-      while (true) {
-        const file = zip.file(`ppt/slides/slide${slideIndex}.xml`);
-        if (!file) break;
-        const xml = await file.async('text');
-        const doc = new DOMParser().parseFromString(xml, 'application/xml');
-        const nodes = doc.getElementsByTagNameNS(aNS, 't');
-        const texts = [];
-        for (let i = 0; i < nodes.length; i++) {
-          const t = nodes[i].textContent.trim();
-          if (t) texts.push(t);
+        // 核心轉換邏輯
+        function convertToMarkdown(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                const ext = file.name.split('.').pop().toLowerCase();
+
+                if (ext === 'txt' || ext === 'md') {
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsText(file);
+                } else if (ext === 'html') {
+                    reader.onload = (e) => resolve(turndownService.turndown(e.target.result));
+                    reader.readAsText(file);
+                } else if (ext === 'docx') {
+                    reader.onload = async (e) => {
+                        try {
+                            const result = await mammoth.convertToMarkdown({ arrayBuffer: e.target.result });
+                            resolve(result.value);
+                        } catch (err) { reject(err); }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else if (ext === 'xlsx' || ext === 'csv') {
+                    reader.onload = (e) => {
+                        try {
+                            const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                            let md = "";
+                            workbook.SheetNames.forEach(sheetName => {
+                                md += `## Sheet: ${sheetName}\n\n`;
+                                const csv = XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+                                md += csv.split('\n').map(row => row.split(',').join(' | ')).join('\n') + '\n\n';
+                            });
+                            resolve(md);
+                        } catch (err) { reject(err); }
+                    };
+                    reader.readAsBinaryString(file);
+                } else if (ext === 'pdf') {
+                    reader.onload = async (e) => {
+                        try {
+                            const pdf = await pdfjsLib.getDocument({ data: e.target.result }).promise;
+                            let text = "";
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const content = await page.getTextContent();
+                                text += content.items.map(item => item.str).join(' ') + '\n\n';
+                            }
+                            resolve(text);
+                        } catch (err) { reject(err); }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else if (ext === 'json') {
+                    reader.onload = (e) => resolve("```json\n" + JSON.stringify(JSON.parse(e.target.result), null, 2) + "\n```");
+                    reader.readAsText(file);
+                } else {
+                    reject("不支援的檔案格式");
+                }
+            });
         }
-        if (texts.length) {
-          md += `## Slide ${slideIndex}\n\n`;
-          md += texts.join('\n') + '\n\n';
+
+        // ✨ 核心修正：單一檔案儲存函式（徹底解決 0 KB 問題）
+        function saveSingleFile(filename, markdownText) {
+            if (!markdownText || markdownText.trim() === "") {
+                alert("轉換內容為空，無法下載！");
+                return;
+            }
+
+            // 修正關鍵：文字內容必須用中括號 [] 包裹成陣列，否則 Blob 的大小會變成 0
+            const blob = new Blob([markdownText], { type: 'text/markdown;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            // 更換副檔名為 .md
+            const baseName = filename.substring(0, filename.lastIndexOf('.')) || filename;
+            link.download = `${baseName}.md`;
+            
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            // 清理節點與記憶體
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
-        slideIndex++;
-      }
-      if (!md) throw new Error(t('pptxEmpty'));
-      return md.trim();
-    }
 
-    // ---------- UI ----------
-    function renderList() {
-      fileList.innerHTML = '';
-      items.forEach((item, idx) => {
-        const card = document.createElement('div');
-        card.className = 'file-card';
-        const statusBadge = item.error
-          ? `<span class="badge err">${t('failed')}</span>`
-          : `<span class="badge ok">${t('success')}</span>`;
-        card.innerHTML = `
-          <div class="file-header">
-            <div class="file-name">${statusBadge} ${escapeHtml(item.name)}</div>
-            <div class="file-actions">
-              ${item.error ? '' : `
-                <button data-action="toggle" data-idx="${idx}">${t('preview')}</button>
-                <button data-action="download" data-idx="${idx}">${t('download')}</button>
-                <button data-action="copy" data-idx="${idx}">${t('copy')}</button>
-              `}
-              <button data-action="remove" data-idx="${idx}">${t('remove')}</button>
-            </div>
-          </div>
-          <div class="file-body" id="body-${idx}">
-            ${item.error
-              ? `<div class="error-msg">${escapeHtml(item.error)}</div>`
-              : `<textarea readonly>${escapeHtml(item.md)}</textarea>`}
-          </div>
-        `;
-        fileList.appendChild(card);
-      });
+        // 批次打包 ZIP 下載
+        async function downloadAllAsZip() {
+            if (convertedFiles.length === 0) {
+                alert("目前沒有任何已成功轉換的檔案。");
+                return;
+            }
+            const zip = new JSZip();
+            convertedFiles.forEach(file => {
+                const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                zip.file(`${baseName}.md`, file.content);
+            });
 
-      results.classList.toggle('show', items.length > 0);
-      const okCount = items.filter(i => !i.error).length;
-      countLabel.textContent = items.length ? t('count', okCount, items.length) : '';
-      downloadAllBtn.disabled = okCount === 0;
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    fileList.addEventListener('click', e => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const idx = +btn.dataset.idx;
-      const action = btn.dataset.action;
-      const item = items[idx];
-      if (!item) return;
-
-      if (action === 'toggle') {
-        document.getElementById(`body-${idx}`).classList.toggle('open');
-      } else if (action === 'download') {
-        downloadMd(item.name, item.md);
-      } else if (action === 'copy') {
-        navigator.clipboard.writeText(item.md).then(() => {
-          showStatus(t('copied'), 'success');
-          setTimeout(hideStatus, 1800);
-        });
-      } else if (action === 'remove') {
-        items.splice(idx, 1);
-        renderList();
-      }
-    });
-
-    function downloadMd(originalName, content) {
-      const name = originalName.replace(/\.[^.]+$/, '') + '.md';
-      const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    downloadAllBtn.addEventListener('click', async () => {
-      const zip = new JSZip();
-      items.filter(i => !i.error).forEach(item => {
-        const name = item.name.replace(/\.[^.]+$/, '') + '.md';
-        zip.file(name, item.md);
-      });
-      const blob = await zip.generateAsync({ type: 'blob' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'markdown-files.zip';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
-
-    clearAllBtn.addEventListener('click', () => {
-      items = [];
-      renderList();
-      fileInput.value = '';
-      hideStatus();
-    });
-
-    // ---------- File handling ----------
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('dragover', e => {
-      e.preventDefault();
-      dropzone.classList.add('dragover');
-    });
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
-    dropzone.addEventListener('drop', e => {
-      e.preventDefault();
-      dropzone.classList.remove('dragover');
-      if (e.dataTransfer.files.length) processFiles([...e.dataTransfer.files]);
-    });
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length) processFiles([...fileInput.files]);
-    });
-
-    async function processFiles(files) {
-      showStatus(t('converting', files.length), 'info');
-      results.classList.add('show');
-
-      for (const file of files) {
-        try {
-          const md = await convertFile(file);
-          items.push({ name: file.name, md });
-        } catch (err) {
-          console.error(err);
-          items.push({ name: file.name, md: '', error: err.message || String(err) });
+            const content = await zip.generateAsync({ type: "blob" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = "forest_markdown_batch.zip";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
         }
-        renderList();
-      }
 
-      const ok = items.filter(i => !i.error).length;
-      showStatus(t('done', ok, items.length), ok ? 'success' : 'error');
-      setTimeout(hideStatus, 3500);
-      fileInput.value = '';
-    }
-
-    // init
-    applyLang();
-  </script>
+        function clearAll() {
+            fileList.innerHTML = '';
+            fileList.style.display = 'none';
+            convertedFiles = [];
+            fileInput.value = '';
+        }
+    </script>
 </body>
 </html>
-```

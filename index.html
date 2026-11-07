@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
   <style>
     :root {
       --bg: #0a0f0c;
@@ -222,7 +223,6 @@
       margin-top: 10px;
     }
     .error-msg { color: var(--danger); font-size: 0.88rem; padding: 12px 0 4px; }
-    .warn-msg { color: var(--warning); font-size: 0.82rem; padding: 8px 0 0; opacity: 0.9; }
 
     footer {
       margin-top: 48px;
@@ -275,7 +275,7 @@
     </div>
 
     <footer data-i18n="footer">
-      mammoth · SheetJS · PDF.js · JSZip · Turndown · Transformers.js (TrOCR)<br>
+      mammoth · SheetJS · PDF.js · JSZip · Turndown · Tesseract.js<br>
       靈感來自 Microsoft MarkItDown · 100% 本地執行
     </footer>
   </div>
@@ -285,7 +285,6 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs';
 
-    // ---------- i18n ----------
     const i18n = {
       zh: {
         title: '🌲 Forest MD Converter',
@@ -294,7 +293,7 @@
         dropDesc: '支援 PDF、DOCX、PPTX、XLSX、CSV、JSON、HTML、TXT、MD',
         downloadZip: '⬇ 全部打包成 ZIP',
         clearAll: '清除全部',
-        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown · Transformers.js (TrOCR)<br>靈感來自 Microsoft MarkItDown · 100% 本地執行',
+        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown · Tesseract.js<br>靈感來自 Microsoft MarkItDown · 100% 本地執行',
         converting: n => `正在轉換 ${n} 個檔案…`,
         done: (ok, total) => `完成：${ok} 成功，${total - ok} 失敗`,
         copied: '已複製到剪貼簿',
@@ -307,13 +306,12 @@
         count: (ok, total) => `${ok} / ${total} 成功`,
         unsupported: ext => `不支援的格式：.${ext}`,
         pptxEmpty: '無法從 PPTX 提取文字（可能是空投影片或純圖片）',
-        pdfEmpty: '此 PDF 沒有文字層（掃描檔）。正在載入 TrOCR（約 60MB，首次較慢，中文效果有限）…',
+        pdfEmpty: '此 PDF 沒有文字層，正在 OCR…',
         pdfFail: msg => `PDF 讀取失敗：${msg}`,
-        ocrProgress: (page, total) => `TrOCR 中：第 ${page}/${total} 頁…`,
-        ocrLoading: '正在下載 / 載入 TrOCR 模型（Hugging Face，約 60MB）…',
-        ocrDone: 'OCR 完成（TrOCR 對繁中效果有限，建議對照原文）',
+        ocrProgress: (page, total) => `OCR 中：第 ${page}/${total} 頁…`,
+        ocrLoading: '正在載入 OCR 引擎（首次會下載語系檔）…',
+        ocrDone: 'OCR 完成',
         ocrFail: msg => `OCR 失敗：${msg}`,
-        ocrWarn: '⚠ TrOCR 主要針對英文列印體；繁中／整頁掃描常有錯字，重要文件請改丟 AI。',
         emptyContent: '內容是空的，無法下載',
         noFiles: '沒有可下載的檔案'
       },
@@ -324,7 +322,7 @@
         dropDesc: 'Supports PDF, DOCX, PPTX, XLSX, CSV, JSON, HTML, TXT, MD',
         downloadZip: '⬇ Download all as ZIP',
         clearAll: 'Clear all',
-        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown · Transformers.js (TrOCR)<br>Inspired by Microsoft MarkItDown · 100% local',
+        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown · Tesseract.js<br>Inspired by Microsoft MarkItDown · 100% local',
         converting: n => `Converting ${n} file(s)…`,
         done: (ok, total) => `Done: ${ok} succeeded, ${total - ok} failed`,
         copied: 'Copied to clipboard',
@@ -337,13 +335,12 @@
         count: (ok, total) => `${ok} / ${total} succeeded`,
         unsupported: ext => `Unsupported format: .${ext}`,
         pptxEmpty: 'Could not extract text from PPTX (empty slides or image-only)',
-        pdfEmpty: 'No text layer (scanned PDF). Loading TrOCR (~60MB, first run slow; limited Chinese)…',
+        pdfEmpty: 'No text layer — running OCR…',
         pdfFail: msg => `PDF read failed: ${msg}`,
-        ocrProgress: (page, total) => `TrOCR: page ${page}/${total}…`,
-        ocrLoading: 'Downloading / loading TrOCR model (Hugging Face, ~60MB)…',
-        ocrDone: 'OCR finished (TrOCR is weak on CJK — verify against original)',
+        ocrProgress: (page, total) => `OCR: page ${page}/${total}…`,
+        ocrLoading: 'Loading OCR engine (first run downloads language data)…',
+        ocrDone: 'OCR finished',
         ocrFail: msg => `OCR failed: ${msg}`,
-        ocrWarn: '⚠ TrOCR targets English print; Chinese/full-page scans often have errors. Prefer AI for critical docs.',
         emptyContent: 'Empty content, cannot download',
         noFiles: 'No files to download'
       }
@@ -373,7 +370,6 @@
       applyLang();
     });
 
-    // ---------- DOM ----------
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
     const statusEl = document.getElementById('status');
@@ -389,8 +385,8 @@
       bulletListMarker: '-'
     });
 
-    /** @type {{name:string, md:string, error?:string, warn?:string}[]} */
     let items = [];
+    let tessWorker = null;
 
     function showStatus(msg, type = 'info') {
       statusEl.textContent = msg;
@@ -398,7 +394,6 @@
     }
     function hideStatus() { statusEl.className = 'status'; }
 
-    // ---------- Converters ----------
     async function convertFile(file) {
       const ext = file.name.split('.').pop().toLowerCase();
       const buffer = await file.arrayBuffer();
@@ -426,7 +421,7 @@
         const header = rows[0].map(c => c.trim()).join(' | ');
         const sep = rows[0].map(() => '---').join(' | ');
         const body = rows.slice(1).map(r => r.map(c => c.trim()).join(' | ')).join('\n');
-        return `${header}\n${sep}\n${body}`;
+        return header + '\n' + sep + '\n' + body;
       }
       if (ext === 'docx') {
         const result = await mammoth.convertToHtml({ arrayBuffer: buffer });
@@ -437,7 +432,7 @@
         let md = '';
         wb.SheetNames.forEach((name, i) => {
           if (i) md += '\n\n';
-          md += `## ${name}\n\n`;
+          md += '## ' + name + '\n\n';
           const sheet = wb.Sheets[name];
           const csv = XLSX.utils.sheet_to_csv(sheet);
           const rows = csv.trim().split(/\r?\n/).map(r => r.split(','));
@@ -463,18 +458,18 @@
       let md = '';
       let slideIndex = 1;
       while (true) {
-        const file = zip.file(`ppt/slides/slide${slideIndex}.xml`);
+        const file = zip.file('ppt/slides/slide' + slideIndex + '.xml');
         if (!file) break;
         const xml = await file.async('text');
         const doc = new DOMParser().parseFromString(xml, 'application/xml');
         const nodes = doc.getElementsByTagNameNS(aNS, 't');
         const texts = [];
         for (let i = 0; i < nodes.length; i++) {
-          const t = nodes[i].textContent.trim();
-          if (t) texts.push(t);
+          const txt = nodes[i].textContent.trim();
+          if (txt) texts.push(txt);
         }
         if (texts.length) {
-          md += `## Slide ${slideIndex}\n\n`;
+          md += '## Slide ' + slideIndex + '\n\n';
           md += texts.join('\n') + '\n\n';
         }
         slideIndex++;
@@ -483,28 +478,21 @@
       return md.trim();
     }
 
-    // ---------- PDF: text layer first, TrOCR fallback (Hugging Face / non-China) ----------
-    let trocrPipe = null;
-
-    async function getTrocr() {
-      if (trocrPipe) return trocrPipe;
+    async function getTessWorker() {
+      if (tessWorker) return tessWorker;
       showStatus(t('ocrLoading'), 'info');
-      // Hugging Face Transformers.js — US/EU infra, not China
-      const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
-      // English printed text; Chinese support is limited by design
-      trocrPipe = await pipeline('image-to-text', 'Xenova/trocr-small-printed', {
-        dtype: 'q8',
-        progress_callback: (p) => {
-          if (p.status === 'progress' && p.file) {
-            const pct = p.progress != null ? Math.round(p.progress) : '';
-            showStatus(`${t('ocrLoading')} ${p.file.split('/').pop()} ${pct}%`, 'info');
+      // chi_tra = Traditional Chinese, eng = English (non-China, Google Tesseract)
+      tessWorker = await Tesseract.createWorker('chi_tra+eng', 1, {
+        logger: m => {
+          if (m.status === 'loading language traineddata' || m.status === 'initializing api') {
+            showStatus(t('ocrLoading') + ' ' + (m.progress != null ? Math.round(m.progress * 100) + '%' : ''), 'info');
           }
         }
       });
-      return trocrPipe;
+      return tessWorker;
     }
 
-    async function renderPageToDataUrl(page, scale = 1.5) {
+    async function renderPageToCanvas(page, scale) {
       const viewport = page.getViewport({ scale });
       const canvas = document.createElement('canvas');
       canvas.width = Math.floor(viewport.width);
@@ -513,10 +501,7 @@
       ctx.fillStyle = '#fff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       await page.render({ canvasContext: ctx, viewport }).promise;
-      const dataUrl = canvas.toDataURL('image/png');
-      canvas.width = 0;
-      canvas.height = 0;
-      return dataUrl;
+      return canvas;
     }
 
     async function convertPdf(buffer) {
@@ -553,70 +538,66 @@
         return textPages.filter(Boolean).join('\n\n').trim();
       }
 
-      // Scanned PDF → TrOCR
-      showStatus(t('pdfEmpty'), 'warning');
-      let ocr;
+      showStatus(t('pdfEmpty'), 'info');
+      let worker;
       try {
-        ocr = await getTrocr();
+        worker = await getTessWorker();
       } catch (err) {
         throw new Error(t('ocrFail', err.message || String(err)));
       }
 
       const ocrPages = [];
       const isMobile = window.innerWidth < 700;
-      const scale = isMobile ? 1.2 : 1.5;
+      const scale = isMobile ? 1.5 : 2.0;
 
       for (let i = 1; i <= numPages; i++) {
         showStatus(t('ocrProgress', i, numPages), 'info');
         const page = await pdf.getPage(i);
-        const dataUrl = await renderPageToDataUrl(page, scale);
+        const canvas = await renderPageToCanvas(page, scale);
         try {
-          const out = await ocr(dataUrl, { max_new_tokens: 256 });
-          const text = (Array.isArray(out) ? out[0]?.generated_text : out?.generated_text) || '';
-          if (text.trim()) ocrPages.push(text.trim());
+          const { data } = await worker.recognize(canvas);
+          const cleaned = (data && data.text ? data.text : '').trim();
+          if (cleaned) ocrPages.push(cleaned);
         } catch (pageErr) {
-          console.warn('TrOCR page failed', i, pageErr);
+          console.warn('OCR page failed', i, pageErr);
         }
+        canvas.width = 0;
+        canvas.height = 0;
       }
 
       const result = ocrPages.join('\n\n').trim();
       if (!result) {
-        throw new Error(t('ocrFail', lang === 'zh' ? '未能辨識出文字（TrOCR 對中文／整頁效果差）' : 'No text recognized (TrOCR is weak on CJK/full pages)'));
+        throw new Error(t('ocrFail', lang === 'zh' ? '未能辨識出文字' : 'No text recognized'));
       }
       showStatus(t('ocrDone'), 'success');
-      setTimeout(hideStatus, 3500);
-      // Attach warning so UI can show it
-      return { __md: result, __warn: t('ocrWarn') };
+      setTimeout(hideStatus, 2000);
+      return result;
     }
 
-    // ---------- UI ----------
     function renderList() {
       fileList.innerHTML = '';
       items.forEach((item, idx) => {
         const card = document.createElement('div');
         card.className = 'file-card';
         const statusBadge = item.error
-          ? `<span class="badge err">${t('failed')}</span>`
-          : `<span class="badge ok">${t('success')}</span>`;
-        card.innerHTML = `
-          <div class="file-header">
-            <div class="file-name">${statusBadge} ${escapeHtml(item.name)}</div>
-            <div class="file-actions">
-              ${item.error ? '' : `
-                <button data-action="toggle" data-idx="${idx}">${t('preview')}</button>
-                <button data-action="download" data-idx="${idx}">${t('download')}</button>
-                <button data-action="copy" data-idx="${idx}">${t('copy')}</button>
-              `}
-              <button data-action="remove" data-idx="${idx}">${t('remove')}</button>
-            </div>
-          </div>
-          <div class="file-body" id="body-${idx}">
-            ${item.error
-              ? `<div class="error-msg">${escapeHtml(item.error)}</div>`
-              : `<textarea readonly>${escapeHtml(item.md)}</textarea>
-                 ${item.warn ? `<div class="warn-msg">${escapeHtml(item.warn)}</div>` : ''}`}
-          </div>
-        `;
+          ? '<span class="badge err">' + t('failed') + '</span>'
+          : '<span class="badge ok">' + t('success') + '</span>';
+        card.innerHTML =
+          '<div class="file-header">' +
+            '<div class="file-name">' + statusBadge + ' ' + escapeHtml(item.name) + '</div>' +
+            '<div class="file-actions">' +
+              (item.error ? '' :
+                '<button data-action="toggle" data-idx="' + idx + '">' + t('preview') + '</button>' +
+                '<button data-action="download" data-idx="' + idx + '">' + t('download') + '</button>' +
+                '<button data-action="copy" data-idx="' + idx + '">' + t('copy') + '</button>') +
+              '<button data-action="remove" data-idx="' + idx + '">' + t('remove') + '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="file-body" id="body-' + idx + '">' +
+            (item.error
+              ? '<div class="error-msg">' + escapeHtml(item.error) + '</div>'
+              : '<textarea readonly>' + escapeHtml(item.md) + '</textarea>') +
+          '</div>';
         fileList.appendChild(card);
       });
 
@@ -643,7 +624,7 @@
       if (!item) return;
 
       if (action === 'toggle') {
-        document.getElementById(`body-${idx}`).classList.toggle('open');
+        document.getElementById('body-' + idx).classList.toggle('open');
       } else if (action === 'download') {
         downloadMd(item.name, item.md);
       } else if (action === 'copy') {
@@ -657,31 +638,71 @@
       }
     });
 
-    function triggerDownload(blob, filename) {
+    async function triggerDownload(blob, filename) {
+      // File System Access (Chrome)
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{
+              description: 'File',
+              accept: {
+                'text/plain': ['.md', '.txt'],
+                'application/zip': ['.zip']
+              }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          showStatus(lang === 'zh' ? '已儲存' : 'Saved', 'success');
+          setTimeout(hideStatus, 1500);
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+
+      // Web Share Level 2 (Android Chrome often supports files)
+      if (navigator.canShare && navigator.share) {
+        try {
+          const file = new File([blob], filename, {
+            type: blob.type || 'application/octet-stream'
+          });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: filename });
+            return;
+          }
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+
+      // Classic blob + <a download>
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename;
-      a.style.display = 'none';
+      a.setAttribute('download', filename);
       a.rel = 'noopener';
+      a.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;';
       document.body.appendChild(a);
-      setTimeout(() => {
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 1500);
-      }, 0);
+      a.click();
+      // Keep blob URL alive long enough for Android download manager
+      setTimeout(function () {
+        try { document.body.removeChild(a); } catch (e) {}
+        URL.revokeObjectURL(url);
+      }, 60000);
     }
 
-    function downloadMd(originalName, content) {
-      if (content == null || content === '') {
+    async function downloadMd(originalName, content) {
+      if (content == null || String(content).trim() === '') {
         showStatus(t('emptyContent'), 'error');
         return;
       }
       const name = originalName.replace(/\.[^.]+$/, '') + '.md';
-      const blob = new Blob(['\uFEFF' + content], { type: 'text/markdown;charset=utf-8' });
-      triggerDownload(blob, name);
+      // text/plain is more reliable than text/markdown on Android
+      const blob = new Blob(['\uFEFF' + content], { type: 'text/plain;charset=utf-8' });
+      await triggerDownload(blob, name);
     }
 
     downloadAllBtn.addEventListener('click', async () => {
@@ -695,8 +716,8 @@
         const name = item.name.replace(/\.[^.]+$/, '') + '.md';
         zip.file(name, '\uFEFF' + item.md);
       });
-      const blob = await zip.generateAsync({ type: 'blob' });
-      triggerDownload(blob, 'markdown-files.zip');
+      const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
+      await triggerDownload(blob, 'markdown-files.zip');
     });
 
     clearAllBtn.addEventListener('click', () => {
@@ -706,7 +727,6 @@
       hideStatus();
     });
 
-    // ---------- File handling ----------
     dropzone.addEventListener('click', () => fileInput.click());
     dropzone.addEventListener('dragover', e => {
       e.preventDefault();
@@ -728,12 +748,8 @@
 
       for (const file of files) {
         try {
-          const out = await convertFile(file);
-          if (out && typeof out === 'object' && out.__md != null) {
-            items.push({ name: file.name, md: out.__md, warn: out.__warn });
-          } else {
-            items.push({ name: file.name, md: out });
-          }
+          const md = await convertFile(file);
+          items.push({ name: file.name, md: md || '' });
         } catch (err) {
           console.error(err);
           items.push({ name: file.name, md: '', error: err.message || String(err) });

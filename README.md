@@ -57,6 +57,7 @@ All rights reserved. See [LICENSE](LICENSE). You may use the published website f
 
 Times are Taiwan time (UTC+8).
 
+- V13 | 2026-11-10 00:18 | Added a link-preview image (1200×630) so shared links show a picture in LINE, Facebook and other apps.
 - V12 | 2026-11-09 10:14 | Added a two-column layout on wide screens (upload on the left, results on the right) and an All Rights Reserved license.
 - V11 | 2026-11-09 09:23 | Added a light/dark theme toggle in the top-right corner (dark by default, choice remembered).
 - V10 | 2026-11-08 20:28 | Added search and social-sharing metadata (description, canonical link, Open Graph, structured data) and a more descriptive page title.

@@ -258,7 +258,18 @@
     :root[data-theme="light"] .status.warning{background:#fbf3df;border-color:#ecdcae}
     :root[data-theme="light"] .badge.ok{background:#dff1e4}
     :root[data-theme="light"] .badge.err{background:#fbe3df}
-</style>
+
+    /* 寬螢幕兩欄：有轉換結果時，左欄上傳區、右欄結果清單 */
+    @media (min-width: 1024px) {
+      .container { max-width: 1280px; padding: 36px 28px 60px; }
+      .container:has(.results.show) { display: grid; grid-template-columns: minmax(340px, 420px) minmax(0, 1fr); column-gap: 24px; align-items: start; }
+      .container:has(.results.show) > header, .container:has(.results.show) > footer { grid-column: 1 / -1; }
+      .container:has(.results.show) > .dropzone { grid-column: 1; grid-row: 2; position: sticky; top: 24px; padding: 56px 20px; }
+      .container:has(.results.show) > .status { grid-column: 1; grid-row: 3; }
+      .container:has(.results.show) > .results { grid-column: 2; grid-row: 2 / span 3; margin-top: 0; }
+      .file-body textarea { height: 360px; }
+    }
+  </style>
 </head>
 <body>
   <div class="container">

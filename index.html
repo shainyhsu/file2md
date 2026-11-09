@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
+<head><script>(function(){var t="dark";try{t=localStorage.getItem("theme")||"dark"}catch(e){}document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark")})()</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Forest MD Converter · 檔案轉 Markdown（PDF、Word、Excel、PPT 批次轉換）</title>
@@ -241,7 +241,24 @@
       font-size: 0.78rem;
       opacity: 0.8;
     }
-  </style>
+  
+    :root{color-scheme:dark}
+    .header-btns{display:flex;gap:8px;flex-shrink:0}
+    :root[data-theme="light"]{color-scheme:light;--bg:#f3f6f3;--bg2:#e9efea;--card:#ffffff;--border:#cddbd1;--text:#16201a;--muted:#5a6e60;--accent:#3d7f52;--accent-hover:#2f6a43;--moss:#dcebe1;--pine:#e6efe8;--success:#2e8a46;--danger:#b4432f;--warning:#946b10}
+    :root[data-theme="light"] body{background-image:radial-gradient(ellipse at 20% 0%,rgba(93,158,111,.14) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(93,158,111,.10) 0%,transparent 45%)}
+    :root[data-theme="light"] .header-text h1{background:linear-gradient(135deg,#4f9a66 0%,#2f6a43 60%,#1f4a30 100%);-webkit-background-clip:text;background-clip:text}
+    :root[data-theme="light"] .lang-toggle{background:var(--card)}
+    :root[data-theme="light"] .lang-toggle:hover{background:var(--moss)}
+    :root[data-theme="light"] .dropzone:hover,:root[data-theme="light"] .dropzone.dragover{background:#f0f7f2}
+    :root[data-theme="light"] .btn{color:#fff}
+    :root[data-theme="light"] .btn-ghost{color:var(--text)}
+    :root[data-theme="light"] .status.info{background:#e6f2ea;color:#2f6a43;border-color:#c3dccb}
+    :root[data-theme="light"] .status.success{background:#e4f4e8;border-color:#bfe0c8}
+    :root[data-theme="light"] .status.error{background:#fbe9e6;border-color:#efc5bd}
+    :root[data-theme="light"] .status.warning{background:#fbf3df;border-color:#ecdcae}
+    :root[data-theme="light"] .badge.ok{background:#dff1e4}
+    :root[data-theme="light"] .badge.err{background:#fbe3df}
+</style>
 </head>
 <body>
   <div class="container">
@@ -251,13 +268,14 @@
         <p class="subtitle" data-i18n="subtitle">純前端轉換・支援批次・檔案永不離開裝置</p>
       </div>
 
+      <div class="header-btns"><button class="lang-toggle" id="themeToggle" type="button"></button>
       <button class="lang-toggle" id="langToggle" title="切換語言 / Toggle language" aria-label="Language">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <path d="M2 12h20"/>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
-      </button>
+      </button></div>
     </header>
 
     <div class="dropzone" id="dropzone">
@@ -744,5 +762,6 @@
 
     applyLang();
   </script>
+<script>(function(){var r=document.documentElement,b=document.getElementById("themeToggle");if(!b)return;var SUN='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',MOON='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>';function sync(){var d=r.getAttribute("data-theme")!=="light";b.innerHTML=d?SUN:MOON;var l=d?"切換為淺色模式 / Light mode":"切換為深色模式 / Dark mode";b.title=l;b.setAttribute("aria-label",l)}b.addEventListener("click",function(){var n=r.getAttribute("data-theme")==="light"?"dark":"light";r.setAttribute("data-theme",n);try{localStorage.setItem("theme",n)}catch(e){}sync();try{window.dispatchEvent(new CustomEvent("themechange",{detail:n}))}catch(e){}});sync()})()</script>
 </body>
 </html>

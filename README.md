@@ -1,4 +1,4 @@
-# Forest MD Converter (file2md)
+# File to Markdown (file2md)
 
 Convert common office and text files to Markdown right in your browser. Batch-friendly, no install, and your files never leave your device.
 
@@ -57,6 +57,7 @@ Copyright (c) 2026 Shainy Hsu. All rights reserved. See [LICENSE](LICENSE).
 
 Times are Taiwan time (UTC+8).
 
+- V15 | 2026-11-11 11:50 | Renamed to “檔案轉 Markdown / File to Markdown” (the forest-green look stays); page title, heading, search entries and link-preview image updated
 - V14 | 2026-11-11 10:07 | New license terms: free to use in a browser for personal, work, school or club use, and the results you make are yours to share; copying, paid services built on it, and AI training need written permission. A License link sits at the bottom of the page
 - V13 | 2026-11-10 00:18 | Added a link-preview image (1200×630) so shared links show a picture in LINE, Facebook and other apps.
 - V12 | 2026-11-09 10:14 | Added a two-column layout on wide screens (upload on the left, results on the right) and an All Rights Reserved license.

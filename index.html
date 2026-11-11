@@ -3,11 +3,11 @@
 <head><script>(function(){var t="dark";try{t=localStorage.getItem("theme")||"dark"}catch(e){}document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark")})()</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Forest MD Converter · 檔案轉 Markdown（PDF、Word、Excel、PPT 批次轉換）</title>
+  <title>檔案轉 Markdown · File to Markdown（PDF、Word、Excel、PPT 批次轉換）</title>
 <meta name="description" content="免安裝、純前端的檔案轉 Markdown 工具：PDF（含 OCR）、DOCX、PPTX、XLSX、CSV、JSON、HTML 批次轉換並打包 ZIP，檔案永不離開你的裝置。">
 <link rel="canonical" href="https://shainyhsu.github.io/file2md/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Forest MD Converter · 檔案轉 Markdown（PDF、Word、Excel、PPT 批次轉換）">
+<meta property="og:title" content="檔案轉 Markdown · File to Markdown（PDF、Word、Excel、PPT 批次轉換）">
 <meta property="og:description" content="免安裝、純前端的檔案轉 Markdown 工具：PDF（含 OCR）、DOCX、PPTX、XLSX、CSV、JSON、HTML 批次轉換並打包 ZIP，檔案永不離開你的裝置。">
 <meta property="og:url" content="https://shainyhsu.github.io/file2md/">
 <meta property="og:locale" content="zh_TW">
@@ -15,11 +15,11 @@
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Forest MD Converter: batch-convert PDF, Word, Excel and PPT to Markdown; your files never leave your device">
+<meta property="og:image:alt" content="File to Markdown: batch-convert PDF, Word, Excel and PPT to Markdown; your files never leave your device">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://shainyhsu.github.io/file2md/og.png">
-<meta name="twitter:image:alt" content="Forest MD Converter: batch-convert PDF, Word, Excel and PPT to Markdown; your files never leave your device">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Forest MD Converter", "url": "https://shainyhsu.github.io/file2md/", "description": "免安裝、純前端的檔案轉 Markdown 工具：PDF（含 OCR）、DOCX、PPTX、XLSX、CSV、JSON、HTML 批次轉換並打包 ZIP，檔案永不離開你的裝置。", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "inLanguage": "zh-Hant", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "TWD"}, "author": {"@type": "Person", "name": "Shainy Hsu", "url": "https://github.com/shainyhsu"}}</script>
+<meta name="twitter:image:alt" content="File to Markdown: batch-convert PDF, Word, Excel and PPT to Markdown; your files never leave your device">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "File to Markdown", "url": "https://shainyhsu.github.io/file2md/", "description": "免安裝、純前端的檔案轉 Markdown 工具：PDF（含 OCR）、DOCX、PPTX、XLSX、CSV、JSON、HTML 批次轉換並打包 ZIP，檔案永不離開你的裝置。", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "inLanguage": "zh-Hant", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "TWD"}, "author": {"@type": "Person", "name": "Shainy Hsu", "url": "https://github.com/shainyhsu"}}</script>
 
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -283,7 +283,7 @@
   <div class="container">
     <header>
       <div class="header-text">
-        <h1 data-i18n="title">🌲 Forest MD Converter</h1>
+        <h1 data-i18n="title">檔案轉 Markdown</h1>
         <p class="subtitle" data-i18n="subtitle">純前端轉換・支援批次・檔案永不離開裝置</p>
       </div>
 
@@ -335,7 +335,7 @@
 
     const i18n = {
       zh: {
-        title: '🌲 Forest MD Converter',
+        title: '檔案轉 Markdown',
         subtitle: '純前端轉換・支援批次・檔案永不離開裝置',
         dropTitle: '拖曳檔案到這裡，或點擊選擇（可複選）',
         dropDesc: '支援 PDF、DOCX、PPTX、XLSX、CSV、JSON、HTML、TXT、MD',
@@ -364,7 +364,7 @@
         noFiles: '沒有可下載的檔案'
       },
       en: {
-        title: '🌲 Forest MD Converter',
+        title: 'File to Markdown',
         subtitle: 'Client-side conversion · Batch support · Files never leave your device',
         dropTitle: 'Drop files here, or click to select (multiple allowed)',
         dropDesc: 'Supports PDF, DOCX, PPTX, XLSX, CSV, JSON, HTML, TXT, MD',

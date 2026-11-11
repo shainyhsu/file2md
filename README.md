@@ -55,7 +55,7 @@ Copyright (c) 2026 Shainy Hsu. All rights reserved. See [LICENSE](LICENSE).
 
 ## Version history
 
-Times are Taiwan time (UTC+8).
+Newest first. Times are Taiwan time (UTC+8). Also kept in [CHANGELOG.md](CHANGELOG.md).
 
 - V15 | 2026-11-11 11:50 | Renamed to “檔案轉 Markdown / File to Markdown” (the forest-green look stays); page title, heading, search entries and link-preview image updated
 - V14 | 2026-11-11 10:07 | New license terms: free to use in a browser for personal, work, school or club use, and the results you make are yours to share; copying, paid services built on it, and AI training need written permission. A License link sits at the bottom of the page

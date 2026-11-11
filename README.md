@@ -51,12 +51,13 @@ OCR quality on scanned PDFs depends on image clarity and fonts. The first OCR ru
 
 ## License
 
-All rights reserved. See [LICENSE](LICENSE). You may use the published website for personal use, but copying, redistributing, mirroring, scraping, or using any part of this work for AI or machine-learning training is not permitted without prior written permission.
+Copyright (c) 2026 Shainy Hsu. All rights reserved. See [LICENSE](LICENSE).
 
 ## Version history
 
 Times are Taiwan time (UTC+8).
 
+- V14 | 2026-11-11 10:07 | New license terms: free to use in a browser for personal, work, school or club use, and the results you make are yours to share; copying, paid services built on it, and AI training need written permission. A License link sits at the bottom of the page
 - V13 | 2026-11-10 00:18 | Added a link-preview image (1200×630) so shared links show a picture in LINE, Facebook and other apps.
 - V12 | 2026-11-09 10:14 | Added a two-column layout on wide screens (upload on the left, results on the right) and an All Rights Reserved license.
 - V11 | 2026-11-09 09:23 | Added a light/dark theme toggle in the top-right corner (dark by default, choice remembered).

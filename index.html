@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>檔案轉 Markdown · File to Markdown（PDF、Word、Excel、PPT 批次轉換）</title>
 <meta name="description" content="免安裝、純前端的檔案轉 Markdown 工具：PDF（含 OCR）、DOCX、PPTX、XLSX、CSV、JSON、HTML 批次轉換並打包 ZIP，檔案永不離開你的裝置。">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="canonical" href="https://shainyhsu.github.io/file2md/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="檔案轉 Markdown · File to Markdown（PDF、Word、Excel、PPT 批次轉換）">
@@ -21,11 +23,11 @@
 <meta name="twitter:image:alt" content="File to Markdown: batch-convert PDF, Word, Excel and PPT to Markdown; your files never leave your device">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "File to Markdown", "url": "https://shainyhsu.github.io/file2md/", "description": "免安裝、純前端的檔案轉 Markdown 工具：PDF（含 OCR）、DOCX、PPTX、XLSX、CSV、JSON、HTML 批次轉換並打包 ZIP，檔案永不離開你的裝置。", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any", "inLanguage": "zh-Hant", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "TWD"}, "author": {"@type": "Person", "name": "Shainy Hsu", "url": "https://github.com/shainyhsu"}}</script>
 
-  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" defer></script>
   <style>
     :root {
       --bg: #0a0f0c;
@@ -305,7 +307,7 @@
         <span>PDF</span><span>DOCX</span><span>PPTX</span><span>XLSX</span>
         <span>CSV</span><span>JSON</span><span>HTML</span><span>TXT</span>
       </div>
-      <input type="file" id="fileInput" multiple
+      <input type="file" id="fileInput" aria-label="選擇檔案" multiple
         accept=".pdf,.docx,.pptx,.xlsx,.xls,.csv,.tsv,.json,.xml,.html,.htm,.txt,.md,.markdown"
         style="display:none" />
     </div>
@@ -324,7 +326,7 @@
     <footer data-i18n="footer">
       mammoth · SheetJS · PDF.js · JSZip · Turndown · Tesseract.js<br>
       靈感來自 Microsoft MarkItDown · 100% 本地執行<br>
-      © 2026 Shainy Hsu · <a href="https://github.com/shainyhsu/file2md/blob/main/LICENSE" target="_blank" rel="noopener">使用條款</a>
+      © 2026 Shainy Hsu · <a href="https://github.com/shainyhsu/file2md/blob/main/LICENSE" target="_blank" rel="noopener">使用條款</a> · <a href="https://shainyhsu.github.io/">所有工具</a>
     </footer>
   </div>
 
@@ -341,7 +343,7 @@
         dropDesc: '支援 PDF、DOCX、PPTX、XLSX、CSV、JSON、HTML、TXT、MD',
         downloadZip: '⬇ 全部打包成 ZIP',
         clearAll: '清除全部',
-        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown · Tesseract.js<br>靈感來自 Microsoft MarkItDown · 100% 本地執行<br>© 2026 Shainy Hsu · <a href="https://github.com/shainyhsu/file2md/blob/main/LICENSE" target="_blank" rel="noopener">使用條款</a>',
+        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown · Tesseract.js<br>靈感來自 Microsoft MarkItDown · 100% 本地執行<br>© 2026 Shainy Hsu · <a href="https://github.com/shainyhsu/file2md/blob/main/LICENSE" target="_blank" rel="noopener">使用條款</a> · <a href="https://shainyhsu.github.io/">所有工具</a>',
         converting: n => `正在轉換 ${n} 個檔案…`,
         done: (ok, total) => `完成：${ok} 成功，${total - ok} 失敗`,
         copied: '已複製到剪貼簿',
@@ -370,7 +372,7 @@
         dropDesc: 'Supports PDF, DOCX, PPTX, XLSX, CSV, JSON, HTML, TXT, MD',
         downloadZip: '⬇ Download all as ZIP',
         clearAll: 'Clear all',
-        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown · Tesseract.js<br>Inspired by Microsoft MarkItDown · 100% local<br>© 2026 Shainy Hsu · <a href="https://github.com/shainyhsu/file2md/blob/main/LICENSE" target="_blank" rel="noopener">License</a>',
+        footer: 'mammoth · SheetJS · PDF.js · JSZip · Turndown · Tesseract.js<br>Inspired by Microsoft MarkItDown · 100% local<br>© 2026 Shainy Hsu · <a href="https://github.com/shainyhsu/file2md/blob/main/LICENSE" target="_blank" rel="noopener">License</a> · <a href="https://shainyhsu.github.io/">All tools</a>',
         converting: n => `Converting ${n} file(s)…`,
         done: (ok, total) => `Done: ${ok} succeeded, ${total - ok} failed`,
         copied: 'Copied to clipboard',

@@ -57,6 +57,7 @@ Copyright (c) 2026 Shainy Hsu. All rights reserved. See [LICENSE](LICENSE).
 
 Newest first. Times are Taiwan time (UTC+8). Also kept in [CHANGELOG.md](CHANGELOG.md).
 
+- V19 | 2026-11-25 09:35 | The light/dark switch now also keeps <meta name="color-scheme"> in step with the theme, as Modern Web Guidance asks; colors and layout unchanged.
 - V18 | 2026-11-25 09:01 | The five converter libraries are checked with Subresource Integrity, so the early connection to jsDelivr is now reused (one connection fewer per visit); the file list is cleared with replaceChildren() instead of innerHTML. Layout and output unchanged.
 - V17 | 2026-11-13 09:36 | Added a classic favicon.ico tab icon for older browsers and search tools.
 - V16 | 2026-11-13 09:20 | Added a tab icon and an "All tools" link in the footer; the converter libraries load without holding up the page, and the file box has a label for screen readers.

@@ -20,5 +20,5 @@
 
 ## 4. 已套用變更與下一步唯一動作（Applied Changes & Immediate Next Action）
 
-- 已修改檔案（2026-11-25，分支 mwg-modernize，PR 待合併）：index.html（五個函式庫加 integrity＋crossorigin＋referrerpolicy；renderList() 內 innerHTML = '' 改 replaceChildren()）、README.md、CHANGELOG.md（V18）、AGENTS.md（Popover 說明、改指向 .ai/）、新建 .ai/00–02。
+- 已修改檔案（2026-11-25，09:01 合併上線）：index.html（五個函式庫加 integrity＋crossorigin＋referrerpolicy；renderList() 內 innerHTML = '' 改 replaceChildren()）、README.md、CHANGELOG.md（V18）、AGENTS.md（Popover 說明、改指向 .ai/）、新建 .ai/00–02。
 - 下一步唯一動作：待 Shainy 指定。
